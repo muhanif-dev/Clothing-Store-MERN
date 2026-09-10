@@ -100,3 +100,39 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
     res.status(500).json({ message: 'Server error', error: (error as Error).message });
   }
 };
+
+export const adminLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({ message: 'Invalid admin credentials' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      res.status(400).json({ message: 'Invalid admin credentials' });
+      return;
+    }
+
+    if (!user.isAdmin) {
+      res.status(403).json({ message: 'Access denied. Not authorized as an admin.' });
+      return;
+    }
+
+    const token = generateToken(user._id.toString(), user.isAdmin);
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token,
+      message: 'Admin login successful',
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+  }
+};

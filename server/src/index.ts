@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from "./config/db.ts";
 import userRoutes from "./routes/userRoutes.ts";
 import productRoutes from "./routes/productRoutes.ts";
+import adminRoutes from "./routes/adminRoutes.ts";
 
 dotenv.config();
 connectDB();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'E-Commerce Backend API is running successfully!' });
