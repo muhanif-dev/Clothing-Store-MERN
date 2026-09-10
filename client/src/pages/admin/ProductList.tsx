@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
@@ -8,8 +9,10 @@ interface Product {
   _id: string;
   name: string;
   category: string;
+  subCategory: string;
   price: number;
   images: string[];
+  bestSeller: boolean;
 }
 
 export const ProductList: React.FC = () => {
@@ -21,10 +24,9 @@ export const ProductList: React.FC = () => {
   const fetchProducts = async () => {
     try {
       const response = await API.get('/products');
-      setProducts(response.data.products || response.data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      setProducts(response.data);
     } catch (err: any) {
-      setError('Failed to fetch products');
+      setError('Failed to fetch product inventory');
     } finally {
       setLoading(false);
     }
@@ -35,7 +37,7 @@ export const ProductList: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    if (!window.confirm('Are you sure you want to remove this product from inventory?')) return;
 
     try {
       await API.delete(`/products/${id}`, {
@@ -49,14 +51,18 @@ export const ProductList: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-4 text-center">Loading products...</div>;
+  if (loading) return <div className="p-4 text-center">Loading inventory...</div>;
   if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md my-8">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">All Products Inventory</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">All Products Inventory</h2>
+        <span className="text-sm text-gray-500">Total Items: {products.length}</span>
+      </div>
+
       {products.length === 0 ? (
-        <p className="text-gray-500">No products found. Add some using the form above!</p>
+        <p className="text-gray-500 text-center py-6">No products found in database.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -71,16 +77,16 @@ export const ProductList: React.FC = () => {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product._id} className="border-b hover:bg-gray-50">
+                <tr key={product._id} className="border-b hover:bg-gray-50 transition">
                   <td className="p-3">
                     <img
                       src={product.images[0] || 'https://via.placeholder.com/50'}
                       alt={product.name}
-                      className="w-12 h-12 object-cover rounded"
+                      className="w-12 h-12 object-cover rounded border"
                     />
                   </td>
                   <td className="p-3 font-medium text-gray-800">{product.name}</td>
-                  <td className="p-3 text-gray-600">{product.category}</td>
+                  <td className="p-3 text-gray-600">{product.category} / {product.subCategory}</td>
                   <td className="p-3 text-gray-600">${product.price}</td>
                   <td className="p-3 text-right">
                     <button
