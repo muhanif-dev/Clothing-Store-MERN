@@ -5,7 +5,6 @@ import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 
-// Define Yup validation schema
 const validationSchema = Yup.object({
   name: Yup.string().required('Product name is required'),
   description: Yup.string().required('Product description is required'),
@@ -23,6 +22,7 @@ export const AddProduct: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [sizes, setSizes] = useState<string[]>(['M', 'L']);
   const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const handleSizeToggle = (size: string) => {
     setSizes((prev) =>
@@ -33,11 +33,19 @@ export const AddProduct: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      setImages(selectedFiles.slice(0, 4)); // Max 4 images
+      if (selectedFiles.length > 4) {
+        setErrorMessage('You can upload a maximum of 4 images.');
+        return;
+      }
+      setErrorMessage('');
+      setImages(selectedFiles);
+
+      // Generate preview URLs for UI display
+      const previews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setImagePreviews(previews);
     }
   };
 
-  // Initialize Formik
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -78,9 +86,10 @@ export const AddProduct: React.FC = () => {
           },
         });
 
-        setSuccessMessage('Product added successfully!');
+        setSuccessMessage('Product added successfully with images!');
         resetForm();
         setImages([]);
+        setImagePreviews([]);
         setSizes(['M', 'L']);
       } catch (error: any) {
         setErrorMessage(error.response?.data?.message || 'Failed to add product');
@@ -90,13 +99,13 @@ export const AddProduct: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md my-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Add New Product (Formik + Yup)</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Add Product — Cloudinary Image Upload</h2>
 
       {successMessage && <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">{successMessage}</div>}
       {errorMessage && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{errorMessage}</div>}
 
       <form onSubmit={formik.handleSubmit} className="space-y-6">
-        {/* Product Images Upload */}
+        {/* Product Images Upload & Previews */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Upload Images (Max 4)</label>
           <input
@@ -106,7 +115,16 @@ export const AddProduct: React.FC = () => {
             onChange={handleImageChange}
             className="w-full border border-gray-300 p-2 rounded"
           />
-          <p className="text-xs text-gray-500 mt-1">{images.length} file(s) selected</p>
+          <div className="flex gap-4 mt-3">
+            {imagePreviews.map((src, index) => (
+              <img
+                key={index}
+                src={src}
+                alt={`Preview ${index + 1}`}
+                className="w-20 h-20 object-cover rounded border border-gray-300"
+              />
+            ))}
+          </div>
         </div>
 
         {/* Product Name */}
@@ -119,7 +137,7 @@ export const AddProduct: React.FC = () => {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Classic Black Blazer"
+            placeholder="e.g., Slim Fit Cotton Shirt"
           />
           {formik.touched.name && formik.errors.name && (
             <p className="text-xs text-red-500 mt-1">{formik.errors.name}</p>
@@ -182,7 +200,7 @@ export const AddProduct: React.FC = () => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="w-full border border-gray-300 p-2 rounded"
-              placeholder="4500"
+              placeholder="3500"
             />
             {formik.touched.price && formik.errors.price && (
               <p className="text-xs text-red-500 mt-1">{formik.errors.price}</p>
@@ -230,7 +248,7 @@ export const AddProduct: React.FC = () => {
           disabled={formik.isSubmitting}
           className="w-full bg-black text-white py-3 rounded font-medium hover:bg-gray-800 transition"
         >
-          {formik.isSubmitting ? 'Uploading...' : 'Add Product'}
+          {formik.isSubmitting ? 'Uploading to Cloudinary...' : 'Add Product'}
         </button>
       </form>
     </div>
