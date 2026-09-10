@@ -1,15 +1,12 @@
-import  express, { type Request, type Response } from 'express';
+import express from 'express';
+import { getProducts, getProductById } from '../controllers/productController.ts';
 
 const router = express.Router();
 
-// Placeholder route for getting all products (will be implemented in Step 4)
-router.get('/', (req: Request, res: Response) => {
-  res.status(200).json({ message: 'Get all products route placeholder' });
-});
+// GET /api/products - Get all products
+router.get('/', getProducts);
 
-// Placeholder route for creating a product (will be implemented in Step 3)
-router.post('/', (req: Request, res: Response) => {
-  res.status(201).json({ message: 'Create product route placeholder' });
-});
+// GET /api/products/:id - Get single product by ID
+router.get('/:id', getProductById);
 
 export default router;
