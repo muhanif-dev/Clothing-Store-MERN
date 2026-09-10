@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from "./config/db.ts";
 import userRoutes from "./routes/userRoutes.ts";
+import productRoutes from "./routes/productRoutes.ts";
 
 dotenv.config();
 connectDB();
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'E-Commerce Backend API is running successfully!' });
