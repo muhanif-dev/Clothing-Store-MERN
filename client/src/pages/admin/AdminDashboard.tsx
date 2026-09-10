@@ -1,5 +1,6 @@
 import React from 'react';
 import { AddProduct } from './AddProduct';
+import { ProductList } from './ProductList';
 
 export const AdminDashboard: React.FC = () => {
   return (
@@ -8,8 +9,9 @@ export const AdminDashboard: React.FC = () => {
         <h1 className="text-xl font-bold text-gray-800">Admin Panel — Clothing Store</h1>
         <span className="text-sm bg-black text-white px-3 py-1 rounded">Administrator</span>
       </header>
-      <main>
+      <main className="space-y-8">
         <AddProduct />
+        <ProductList />
       </main>
     </div>
   );
