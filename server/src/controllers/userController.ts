@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.ts';
+import { type AuthRequest } from '../middleware/authMiddleware.ts';
+
 
 const generateToken = (id: string, isAdmin: boolean): string => {
   return jwt.sign(
@@ -72,6 +74,27 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       isAdmin: user.isAdmin,
       token,
       message: 'Login successful',
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+  }
+};
+
+export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    const user = await User.findById(userId).select('-passwordHash');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: (error as Error).message });
