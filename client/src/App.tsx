@@ -1,4 +1,5 @@
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { Collection } from './pages/customer/Collection';
 import CustomHomePage from './pages/CustomHomePage';
 
 function App() {
@@ -6,6 +7,7 @@ function App() {
     <>
        <AdminDashboard />;
        <CustomHomePage />;
+       <Collection />;
     </>
   )
 }
