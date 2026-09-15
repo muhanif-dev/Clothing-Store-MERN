@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-// Extend Express Request interface to attach user info after authentication
 export interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -10,33 +9,27 @@ export interface AuthRequest extends Request {
 }
 
 export const protect = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  let token;
+  const authHeader = req.headers.authorization;
 
-  // 1. Check if Authorization header exists and starts with 'Bearer'
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      // 2. Extract token from string ("Bearer eyJhbGci...")
-      token = req.headers.authorization.split(' ')[1];
+  if (!authHeader || !authHeader.startsWith('Bearer')) {
+    res.status(401).json({ message: 'Not authorized, no token provided' });
+    return;
+  }
 
-      if (!token) {
-        throw new Error('Token is missing');
-      }
+  try {
+    const token = authHeader.split(' ')[1];
 
-      // 3. Verify token using JWT_SECRET
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as unknown as { id: string; isAdmin: boolean };
-
-
-      // 4. Attach decoded user data to request object for downstream controllers
-      req.user = decoded;
-
-      // 5. Proceed to the next middleware or controller
-      next();
-      return;
-    } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
+    if (!token) {
+      res.status(401).json({ message: 'Not authorized, token missing' });
       return;
     }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as unknown as { id: string; isAdmin: boolean };
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };
 

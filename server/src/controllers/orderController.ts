@@ -1,73 +1,86 @@
-import type { Response } from 'express';
-import mongoose from 'mongoose';
-import type { AuthRequest } from '../middleware/authMiddleware.ts';
-import Order from '../models/orderModel.ts';
+import type { Request, Response } from 'express';
+import Order from '../models/orderModel.js';
+import User from '../models/userModel.js';
 
-const paymentMethodMap: Record<string, 'EasyPaisa' | 'JazzCash' | 'Cash on Delivery'> = {
-  easypaisa: 'EasyPaisa',
-  jazzcash: 'JazzCash',
-  cod: 'Cash on Delivery',
-};
+// Extend Express Request to include authenticated user payload
+interface AuthRequest extends Request {
+  user?: {
+    _id: string;
+    [key: string]: any;
+  };
+}
 
+// Placing orders using Cash on Delivery / Mobile Wallets
 export const placeOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { items, amount, address, paymentMethod } = req.body;
+    const userId = req.user?._id;
 
-    if (!items || items.length === 0) {
-      res.status(400).json({ message: 'No items in the order' });
-      return;
-    }
-
-    const userId = req.user?.id;
     if (!userId) {
-      res.status(401).json({ message: 'Not authorized' });
+      res.status(401).json({ success: false, message: 'Unauthorized user' });
       return;
     }
 
-    const normalizedPaymentMethod = paymentMethodMap[String(paymentMethod).toLowerCase()];
-    if (!normalizedPaymentMethod) {
-      res.status(400).json({ message: 'Invalid payment method' });
-      return;
-    }
-
-    const formattedAddress = {
-      name: `${address.firstName} ${address.lastName}`,
-      address: `${address.street}, ${address.city}, ${address.state}, ${address.zipcode}, ${address.country}`,
-      phone: address.phone,
-      city: address.city,
-      email: address.email,
-    };
-
-    const newOrder = new Order({
-      userId: new mongoose.Types.ObjectId(userId),
+    const orderData = {
+      userId,
       items,
       amount,
-      address: formattedAddress,
-      paymentMethod: normalizedPaymentMethod,
-    });
+      address,
+      paymentMethod,
+      payment: false, // Will toggle to true once paid/verified
+      date: Date.now(),
+      status: 'Order Placed',
+    };
 
-    const savedOrder = await newOrder.save();
+    const newOrder = new Order(orderData);
+    await newOrder.save();
 
-    res.status(201).json({
-      message: 'Order placed successfully',
-      order: savedOrder,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+    // Clear user's cart data in DB
+    await User.findByIdAndUpdate(userId, { cartData: {} });
+
+    res.status(201).json({ success: true, message: 'Order Placed Successfully' });
+  } catch (error: any) {
+    console.error('Error placing order:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-export const getMyOrders = async (req: AuthRequest, res: Response): Promise<void> => {
+// All orders data for Admin Panel
+export const allOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const orders = await Order.find({});
+    res.status(200).json({ success: true, orders });
+  } catch (error: any) {
+    console.error('Error fetching all orders:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// User Orders data for Frontend /orders page
+export const userOrders = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?._id;
     if (!userId) {
-      res.status(401).json({ message: 'Not authorized' });
+      res.status(401).json({ success: false, message: 'Unauthorized user' });
       return;
     }
 
-    const orders = await Order.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 });
-    res.status(200).json(orders);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+    const orders = await Order.find({ userId });
+    res.status(200).json({ success: true, orders });
+  } catch (error: any) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update order status from Admin Panel
+export const updateStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId, status } = req.body;
+    await Order.findByIdAndUpdate(orderId, { status });
+    res.status(200).json({ success: true, message: 'Status Updated' });
+  } catch (error: any) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
