@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { Link } from 'react-router-dom';
 
 interface Product {
   _id: string;
@@ -13,6 +15,8 @@ interface Product {
 }
 
 export const Collection: React.FC = () => {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,29 +171,35 @@ export const Collection: React.FC = () => {
             {filteredProducts.map((product) => {
               const isWishlisted = isInWishlist(product._id);
               return (
-                <div key={product._id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+                <div
+                  key={product._id}
+                  onClick={() => navigate(`/product/${product._id}`)}
+                  className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                >
                   <div className="relative h-64 bg-gray-100">
-                    <img
-                      src={product.images[0] || 'https://via.placeholder.com/300'}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={() =>
-                        isWishlisted
-                          ? removeFromWishlist(product._id)
-                          : addToWishlist({
-                              productId: product._id,
-                              name: product.name,
-                              price: product.price,
-                              image: product.images[0],
-                            })
-                      }
-                      className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-gray-100 transition"
-                    >
-                      {isWishlisted ? '❤️' : '🤍'}
-                    </button>
-                  </div>
+                        <Link to={`/product/${product._id}`}>
+                            <img
+                            src={product.images[0] || 'https://via.placeholder.com/300'}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            />
+                        </Link>
+                        <button
+                            onClick={() =>
+                            isWishlisted
+                                ? removeFromWishlist(product._id)
+                                : addToWishlist({
+                                    productId: product._id,
+                                    name: product.name,
+                                    price: product.price,
+                                    image: product.images[0],
+                                })
+                            }
+                            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-gray-100 transition"
+                        >
+                            {isWishlisted ? '❤️' : '🤍'}
+                        </button>
+                        </div>
 
                   <div className="p-4">
                     <span className="text-xs text-gray-500 uppercase">{product.category}</span>
@@ -197,7 +207,8 @@ export const Collection: React.FC = () => {
                     <p className="text-black font-bold mt-2">${product.price}</p>
 
                     <button
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         addToCart({
                           productId: product._id,
                           name: product.name,
@@ -205,8 +216,8 @@ export const Collection: React.FC = () => {
                           image: product.images[0],
                           size: 'M',
                           quantity: 1,
-                        })
-                      }
+                        });
+                      }}
                       className="w-full mt-4 bg-black text-white py-2 rounded text-sm font-medium hover:bg-gray-800 transition"
                     >
                       Add to Cart

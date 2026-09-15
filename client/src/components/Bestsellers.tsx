@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import API from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { Link } from 'react-router-dom';
 
 interface Product {
   _id: string;
@@ -52,11 +53,13 @@ export const Bestsellers: React.FC = () => {
           return (
             <div key={product._id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
               <div className="relative h-64 bg-gray-100">
+                <Link to={`/product/${product._id}`}>
                 <img
                   src={product.images[0] || 'https://via.placeholder.com/300'}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
+                </Link>
                 <button
                   onClick={() =>
                     isWishlisted

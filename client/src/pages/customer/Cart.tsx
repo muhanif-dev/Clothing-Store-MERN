@@ -3,10 +3,10 @@ import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 
 export const Cart: React.FC = () => {
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
   const navigate = useNavigate();
 
-  const subtotal = getCartTotal();
+  const subtotal = cartTotal;
   const shippingFee = subtotal > 0 ? 10 : 0;
   const total = subtotal + shippingFee;
 
