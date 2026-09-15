@@ -52,7 +52,8 @@ export const PlaceOrder: React.FC = () => {
         paymentMethod,
       };
 
-      await API.post('/orders', orderPayload);
+      // FIXED: Corrected endpoint from '/orders' to '/orders/place'
+      await API.post('/orders/place', orderPayload);
       clearCart();
       navigate('/orders');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
